@@ -23,9 +23,6 @@ GLuint indices[] =
 	1, 2, 3, // Second Triangle
 };
 
-
-
-
 const char* vertexShaderSource = 
 "#version 330 core\n"
 "\n"
@@ -143,7 +140,6 @@ int main()
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
 
 	// Pass vertices to the Graphics Card.
 	GLuint VBO;
