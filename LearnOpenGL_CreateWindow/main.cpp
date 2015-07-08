@@ -4,44 +4,24 @@
 // GLFW
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#include <math.h>
+#include "shader.h"
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
-GLfloat vertices[] = 
-{
- 	 0.5f,  0.5f, 0.0f,  // Top Right
- 	 0.5f, -0.5f, 0.0f,  // Bottom Right
-	-0.5f, -0.5f, 0.0f,  // Bottom Left
-	-0.5f,  0.5f, 0.0f   // Top Left 
+GLfloat vertices[] = {
+	// Positions       // Colors
+	0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,   // Bottom Right
+   -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,   // Bottom Left
+	0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f    // Top 
 };
 
 GLuint indices[] =
 {
-	0, 1, 3, // First Triangle
-	1, 2, 3, // Second Triangle
+	0, 1, 2, // First Triangle
 };
-
-const char* vertexShaderSource = 
-"#version 330 core\n"
-"\n"
-"layout(location = 0) in vec3 position;\n"
-"\n"
-"void main()\n"
-"{\n"
-"	gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
-"}\n\0";
-
-const char* fragmentShaderSource =
-"#version 330 core\n"
-"\n"
-"out vec4 color;\n"
-"\n"
-"void main()\n"
-"{\n"
-"	color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\n\0";
 
 int main()
 {
@@ -81,54 +61,7 @@ int main()
 	// Define the viewport dimensions
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	// Compile the vertex shader.
-	GLuint vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	GLint success;
-	GLchar infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		printf("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s", infoLog);
-	}
-
-	// Compile the fragment shader
-	GLuint fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		printf("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%s", infoLog);
-	}
-	
-	// Link the shader program
-	GLuint shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	// Check for linking errors.
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		printf("ERROR::PROGRAM::SHADER::LINK_FAILED\n%s", infoLog);
-	}
-	// Clean up
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	Shader shader("shader.vs", "shader.frag");
 
 	// Create a VAO
 	GLuint VAO;
@@ -147,12 +80,23 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	// Position Attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+
+	// Color Attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
 	glBindVertexArray(0);
 
 	// Uncomment this line to enable wireframe mode.
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// Find out the MAX VERTEX ATTRIBS
+	//GLint maxAttributes;
+	//glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttributes);
+	//printf("maxAttributes = %i", maxAttributes);
 
 	// Game loop
 	while (!glfwWindowShouldClose(window))
@@ -160,10 +104,23 @@ int main()
 		// Check and call events.
 		glfwPollEvents();
 
-		// Rending commands here
-		glUseProgram(shaderProgram);
+		// Clear the color buffer
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// Activate the shader.
+		//glUseProgram(shaderProgram);
+		shader.Use();
+
+		// Update the uniform color.
+		GLfloat timeValue = glfwGetTime();
+		GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
+		GLint vertexColorLocation = glGetUniformLocation(shader.Program, "ourColor");
+		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+		// Draw the rectangle.
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		// Swap the buffers.
