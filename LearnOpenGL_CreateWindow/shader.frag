@@ -1,5 +1,4 @@
 #version 330 core
-in vec3 ourColor;
 in vec2 ourTextureCoord;
 
 out vec4 color;
