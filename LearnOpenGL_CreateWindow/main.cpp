@@ -7,6 +7,9 @@
 #include <math.h>
 #include "shader.h"
 #include <SOIL.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
@@ -148,6 +151,15 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		glUniform1i(glGetUniformLocation(shader.Program, "ourTexture2"), 1);
+
+		// Send in the transformation matrix
+		glm::mat4 trans;
+		GLfloat angle = (GLfloat)glfwGetTime() * glm::radians(50.0f);
+		trans = glm::rotate(trans, angle, glm::vec3(0.0, 0.0, 1.0));
+		trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+
+		GLuint transformLoc = glGetUniformLocation(shader.Program, "transform");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
 		// Draw the rectangle.
 		glBindVertexArray(VAO);
