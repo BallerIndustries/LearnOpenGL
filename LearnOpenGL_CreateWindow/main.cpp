@@ -6,21 +6,24 @@
 #include <stdio.h>
 #include <math.h>
 #include "shader.h"
+#include <SOIL.h>
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
 GLfloat vertices[] = {
-	// Positions       // Colors
-	0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,   // Bottom Right
-   -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,   // Bottom Left
-	0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f    // Top 
+	// Positions        // Colors         // Texture Coords
+	 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // Top Right
+	 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // Bottom Right
+	-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,   // Bottom Left
+	-0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f    // Top Left 
 };
 
 GLuint indices[] =
 {
-	0, 1, 2, // First Triangle
+	0, 1, 3, // First Triangle
+	1, 2, 3,
 };
 
 int main()
@@ -81,22 +84,48 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// Position Attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
 	// Color Attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
+
+	// Texture Coordinates Attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 
-	// Uncomment this line to enable wireframe mode.
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// Load image 1
+	GLuint texture1, texture2;
+	int width, height;
+	unsigned char* image1 = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
 
-	// Find out the MAX VERTEX ATTRIBS
-	//GLint maxAttributes;
-	//glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttributes);
-	//printf("maxAttributes = %i", maxAttributes);
+	// Generate texture 1
+	glGenTextures(1, &texture1);
+	//glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image1);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// Cleanup: Free image memory and unbind the texture.
+	SOIL_free_image_data(image1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Load image 2
+	unsigned char* image2 = SOIL_load_image("awesomeface.png", &width, &height, 0, SOIL_LOAD_RGB);
+
+	// Generate texture 2
+	glGenTextures(1, &texture2);
+	//glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image2);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// Cleanup: Free image memory and unbind the texture.
+	SOIL_free_image_data(image2);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	// Game loop
 	while (!glfwWindowShouldClose(window))
@@ -109,18 +138,20 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Activate the shader.
-		//glUseProgram(shaderProgram);
 		shader.Use();
 
-		// Update the uniform color.
-		GLfloat timeValue = glfwGetTime();
-		GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
-		GLint vertexColorLocation = glGetUniformLocation(shader.Program, "ourColor");
-		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+		// Bind texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glUniform1i(glGetUniformLocation(shader.Program, "ourTexture1"), 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+		glUniform1i(glGetUniformLocation(shader.Program, "ourTexture2"), 1);
 
 		// Draw the rectangle.
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		// Swap the buffers.
