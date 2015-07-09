@@ -107,7 +107,6 @@ int main()
 
 	// Generate texture 1
 	glGenTextures(1, &texture1);
-	//glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture1);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image1);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -153,13 +152,33 @@ int main()
 		glUniform1i(glGetUniformLocation(shader.Program, "ourTexture2"), 1);
 
 		// Send in the transformation matrix
-		glm::mat4 trans;
-		GLfloat angle = (GLfloat)glfwGetTime() * glm::radians(50.0f);
-		trans = glm::rotate(trans, angle, glm::vec3(0.0, 0.0, 1.0));
-		trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+		//glm::mat4 trans;
+		//GLfloat angle = (GLfloat)glfwGetTime() * glm::radians(50.0f);
+		//trans = glm::rotate(trans, angle, glm::vec3(0.0, 0.0, 1.0));
+		//trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
 
-		GLuint transformLoc = glGetUniformLocation(shader.Program, "transform");
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+		//GLuint transformLoc = glGetUniformLocation(shader.Program, "transform");
+		//glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
+		// Calculate model view and projection matrices.
+		glm::mat4 model;
+		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0, 0.0f, 0.0f));
+
+		glm::mat4 view;
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+		glm::mat4 projection;
+		projection = glm::perspective(glm::radians(45.0f), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
+
+		// Send matrices to the GPU
+		GLint modelLoc = glGetUniformLocation(shader.Program, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+		GLint viewLoc = glGetUniformLocation(shader.Program, "view");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+		GLint projectionLoc = glGetUniformLocation(shader.Program, "projection");
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		// Draw the rectangle.
 		glBindVertexArray(VAO);
