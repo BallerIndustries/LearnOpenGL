@@ -60,6 +60,20 @@ GLfloat vertices[] =
 	-0.5f,  0.5f, -0.5f, 0.0f, 1.0f
 };
 
+glm::vec3 cubePositions[] = 
+{
+	glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::vec3(2.0f, 5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f, 3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f, 2.0f, -2.5f),
+	glm::vec3(1.5f, 0.2f, -1.5f),
+	glm::vec3(-1.3f, 1.0f, -1.5f)
+};
+
 //GLuint indices[] =
 //{
 //	0, 1, 3, // First Triangle
@@ -200,9 +214,6 @@ int main()
 		//glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
 		// Calculate model view and projection matrices.
-		glm::mat4 model;
-		model = glm::rotate(model, (GLfloat)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-
 		glm::mat4 view;
 		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
@@ -210,9 +221,6 @@ int main()
 		projection = glm::perspective(glm::radians(45.0f), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
 		// Send matrices to the GPU
-		GLint modelLoc = glGetUniformLocation(shader.Program, "model");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
 		GLint viewLoc = glGetUniformLocation(shader.Program, "view");
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -221,8 +229,20 @@ int main()
 
 		// Draw the rectangle.
 		glBindVertexArray(VAO);
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		
+		for (GLuint i = 0; i < 10; i++)
+		{
+			glm::mat4 model;
+			model = glm::translate(model, cubePositions[i]);
+			
+			GLfloat angle = glm::radians(20.0f) * 5 * (GLfloat)glfwGetTime();
+			model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
+
+			GLint modelLoc = glGetUniformLocation(shader.Program, "model");
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 		glBindVertexArray(0);
 
 		// Swap the buffers.
