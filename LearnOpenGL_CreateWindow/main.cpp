@@ -182,9 +182,28 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 
+
+
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+	glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+	
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
+		// Calculate the view
+		GLfloat radius = 10.f;
+		GLfloat camX = sin(glfwGetTime()) * radius;
+		GLfloat camY = cos(glfwGetTime()) * radius;
+		glm::mat4 view;
+		view = glm::lookAt(glm::vec3(camX, 0.0f, camY), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		
+		//glm::mat4 view;
+		//view = glm::lookAt()
+
 		// Check and call events.
 		glfwPollEvents();
 
@@ -203,19 +222,6 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		glUniform1i(glGetUniformLocation(shader.Program, "ourTexture2"), 1);
-
-		// Send in the transformation matrix
-		//glm::mat4 trans;
-		//GLfloat angle = (GLfloat)glfwGetTime() * glm::radians(50.0f);
-		//trans = glm::rotate(trans, angle, glm::vec3(0.0, 0.0, 1.0));
-		//trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
-
-		//GLuint transformLoc = glGetUniformLocation(shader.Program, "transform");
-		//glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-		// Calculate model view and projection matrices.
-		glm::mat4 view;
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
